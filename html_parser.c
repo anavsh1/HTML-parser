@@ -84,13 +84,19 @@ char* lowerCase (char* str){
 
 int addLeaf(struct Tree_Node * parent, struct Tree_Node * leaf) {
     addLeafVal++;
+    
+    printf("addLeaf: %d \n", addLeafVal);
     if (parent != NULL && leaf != NULL) {
         int parentSize = sizeof(parent->aChildren) / sizeof(parent->aChildren[0]);
         for (int i = 0; i < parentSize; i++) {
             if (parent->aChildren[i] == NULL) {
                 parent->aChildren[i] = leaf;
+                printf("addingLeaf @ i: %d \n", i);
                 break;
-        } 
+        } else {
+            printf("aChildrenTagType: %s \n", parent->aChildren[i]->type);
+        }
+
     }
         //printf("add leaf %s \n", leaf->tag.type);
         //printf("parentsize: %lu \n", sizeof(parent->aChildren) / sizeof(parent->aChildren[0]) - 1);
@@ -177,7 +183,7 @@ void printNode(struct Tree_Node * node) {
   
   }
 
-// it will return true/false value. For STAGE 2, it should compare for all STAGE2 variations. 
+// it will return true/false value. FOr STAGE 2, it should compare for all STAGE2 variations. 
 bool isStage(int iStage, int iCurrentStage) {
     if (iStage == iCurrentStage) {
         return true;
@@ -319,6 +325,7 @@ void setWordCount (char* text) {
    /* printing the array and frequency */
    int k = 0;
    while (wordArray[k] != NULL) {
+       printf ("%d -- %s -- %d \n", k, wordArray[k], countArray[k]);
        k++;
    }
  
@@ -329,9 +336,7 @@ int getWordCount() {
    int i = 0;
    int wordCount = 0;
    while (wordArray[i] != NULL) {
-    if (strcmp(wordArray[i], "") != 0) {
-        wordCount++;
-    }
+       wordCount++;
        i++;
    }
  
@@ -370,19 +375,24 @@ void parseArgs(int argc, char* argv[]) {
     }
 }
 
+//seperate function checkFormat
+//traverse parent passed variable
+//
+//if first child is html, level 1 pass the text
+//next child, title body, body can only be 1
+//every child should be level 3 only
+//under each child should be under level 4
+
+/*
+checkFormat(struct Tree_Node * parent) {
+
+} */
 
 int numberOfHtmlTags = 0;
 int numberOfBodyTags = 0;
  
 bool isFormatCorrect(struct Tree_Node * parent_node, struct Tree_Node * current_node) {
-    printf("in isFormat current node type: %s\n", current_node->type);
-    if (current_node->isValidTag == false) {
-        return isFormatValid;
-    }
-    if (!isFormatValid) {
-        return false;
-    }
-
+    printf("in isFormatCorrect \n");
     int size = 0;
     int j = 0;
     while (parent_node->aChildren[j] != NULL) {
@@ -428,8 +438,12 @@ bool isFormatCorrect(struct Tree_Node * parent_node, struct Tree_Node * current_
            }
           
            if(!isFormatCorrect(current_node, current_node->aChildren[i])) {
+               printf("isFormat returning false \n");
                return false;
-           } 
+           } else {
+               printf("isFormat returning true \n");
+           }
+      
        }
  
    }
@@ -449,6 +463,7 @@ bool isFormatCorrect(struct Tree_Node * parent_node, struct Tree_Node * current_
     int nested_tag_start_pos = 0;
     int nested_tag_end_pos = 0;
 
+    printf("FullNodeText: %s \n", full_node_text);
     int totalNodeSize = (int) strlen(full_node_text);
 
     struct Tree_Node * child_node;
@@ -509,6 +524,7 @@ bool isFormatCorrect(struct Tree_Node * parent_node, struct Tree_Node * current_
             child_node->iLevel = getLevel(child_node->type);
             child_node->isValidTag = isValidTag(child_node->type);
            
+            printf("close of openining tag \n");
             continue;
         }
 
@@ -530,6 +546,7 @@ bool isFormatCorrect(struct Tree_Node * parent_node, struct Tree_Node * current_
             int nestedTag_iLevel = getLevel(nestedTagType);
             bool nestedTag_isValidTag = isValidTag(nestedTagType);
             
+            printf("close of nested tag : %s %d %d \n", nestedTag_Type, nestedTag_iLevel, nestedTag_isValidTag);
 
             if(nestedTag_isValidTag &&  nestedTag_iLevel == child_node->iLevel){
                 child_node->type = nestedTag_Type;
@@ -545,6 +562,7 @@ bool isFormatCorrect(struct Tree_Node * parent_node, struct Tree_Node * current_
         if (isStage(STAGE3_CAPTURE_CONTENT, iCurrentStage) && currentCharacter == '<' && nextCharacter == '/') {
             iCurrentStage = STAGE5_CLOSING_TAG;
             child_node->tag_type_closing_start_pos = i;
+            printf("tag close start pos: %d\n ", child_node->tag_type_closing_start_pos);
             //save all content
             continue;
 
@@ -554,12 +572,6 @@ bool isFormatCorrect(struct Tree_Node * parent_node, struct Tree_Node * current_
             // if start and end tag match
             char closingTag[10];
             safe_strcpy(closingTag, full_node_text + child_node->tag_type_closing_start_pos + 2, i - (child_node->tag_type_closing_start_pos + 1));
-              // check: if this tag does not have start tag and this is a invalid tag then mark this as inValid. 
-            /*if (!isValidTag(closingTag)){
-                if (strcmp(child_node->type, lowerCase(closingTag)) != 0) {
-                    isFormatValid = false; 
-                }
-            } */
             if (strcmp(child_node->type, lowerCase(closingTag)) == 0) {
                 child_node->isValidNode = true;
                 child_node->tag_type_closing_end_pos = i;
@@ -571,6 +583,7 @@ bool isFormatCorrect(struct Tree_Node * parent_node, struct Tree_Node * current_
                 if (child_node->isValidTag) {
                     strcat(parent_node->outputText, returnStr);
                 }
+                printf("returnString: %s \n", returnStr);
                 addLeaf(parent_node, child_node);
                 struct Tree_Node * c1_node = (struct Tree_Node *) malloc (sizeof(struct Tree_Node));
                 child_node = c1_node;
@@ -602,6 +615,8 @@ bool isFormatCorrect(struct Tree_Node * parent_node, struct Tree_Node * current_
         }
         
 
+
+        printf ("for loop: %d  Char: %c  Stage: %d  \n", i, full_node_text[i], iCurrentStage); 
     }
 
     /*if (parent_node->type == NULL){
@@ -609,7 +624,7 @@ bool isFormatCorrect(struct Tree_Node * parent_node, struct Tree_Node * current_
     }*/
     //******call replace entities here*****
     char* textWithReplacedEntities = replaceEntities(parent_node->outputText);
-    return parent_node->outputText = textWithReplacedEntities;  // end of for 
+    return parent_node->outputText =textWithReplacedEntities;  // end of for 
     //return parent_node->outputText ;
  }
 
@@ -622,9 +637,12 @@ int main(int argc, char *argv[]) {
     struct Tree_Node * parent = (struct Tree_Node *) malloc (sizeof(struct Tree_Node));
     parent->iLevel = 0;
     FILE * fp;
+    printf(" printing args %s %s \n", argv[0], argv[1]);
 
     //fp = fopen(argv[1], "r");
     fp = fopen(argv[inputFileLocation], "r");
+    //fp = fopen("input.html", "r");
+
 
     fseek(fp, 0L, SEEK_END);
 
@@ -636,9 +654,9 @@ int main(int argc, char *argv[]) {
  
 	fread(line, bytes, 1, fp);
     createNode1(parent, line);
+    printf("before print node\n");
     printNode(parent);
     setWordCount(parent->outputText);
-    printf("FinaloutputText: %s", parent->outputText);
     isFormatValid = isFormatCorrect(parent, parent->aChildren[0]);
     if (isFormatValid) {
         if (isWordCountFlagExist) {
